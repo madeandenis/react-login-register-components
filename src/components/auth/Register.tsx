@@ -8,7 +8,6 @@ import PasswordStrengthBar from 'react-password-strength-bar';
 
 const Register: React.FC = () => {
     const [flashMessage, setFlashMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-    const [showFlash, setShowFlash] = useState(false);
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -18,18 +17,16 @@ const Register: React.FC = () => {
     // True -> disabled, False -> enabled 
     const [registerButtonState, setRegisterButtonState] = useState(true);
     const passwordStrengthRef = useRef<HTMLDivElement>(null);
+    const [passwordScore, setPasswordScore] = useState(0);
 
     useEffect(() => {
-        if(passwordStrengthRef.current) {
-            const passwordStrength = passwordStrengthRef.current.textContent;
-            setRegisterButtonState(
-                !username ||
-                !validator.isEmail(email) ||
-                password !== confirmPassword ||
-                (passwordStrength !== 'good' && passwordStrength !== 'strong')
-            )
-        }
-    }, [username,email,password,confirmPassword]);
+        setRegisterButtonState(
+            !username ||
+            !validator.isEmail(email) ||
+            password !== confirmPassword ||
+            passwordScore < 3
+        )
+    }, [username,email,password,confirmPassword,passwordScore]);
     
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
@@ -61,14 +58,13 @@ const Register: React.FC = () => {
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         setFlashMessage(null);
-        setShowFlash(false);
 
         fetch(ApiEndpoints.register, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username: username, email: email, password: password })
         })
         .then(response => {
             return response.json()
@@ -76,16 +72,13 @@ const Register: React.FC = () => {
         .then(data => {
             if(data.type === "success"){
                 setFlashMessage({ type: 'success', message: data.message });
-                setShowFlash(true);
             }
             else{
                 setFlashMessage({ type: 'error', message: data.message });
-                setShowFlash(true);
             }
         })
         .catch(error => {
             setFlashMessage({ type: 'error', message: 'An error occurred. Please try again.' });
-            setShowFlash(true);
         });
     };
 
@@ -153,7 +146,7 @@ const Register: React.FC = () => {
                     />
                 </div>
                 <div ref={passwordStrengthRef}>
-                    <PasswordStrengthBar password={password} />
+                    <PasswordStrengthBar password={password} onChangeScore={setPasswordScore} />
                 </div>
                 <div className="form-group">
                     <label htmlFor="confirm-password">Confirm Password</label>

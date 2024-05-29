@@ -15,6 +15,7 @@ const FlashMessage: React.FC<FlashMessageProps> = ({ type, message, duration = 3
             setVisible(false);
         }, duration);
 
+        // Cleans up the timer if the component unmounts before the timer completes, preventing potential memory leaks
         return () => clearTimeout(timer);
     }, [duration]);
 

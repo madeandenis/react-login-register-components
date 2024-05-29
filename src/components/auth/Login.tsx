@@ -5,12 +5,10 @@ import ApiEndpoints from '../../utility/ApiEndpoints.tsx';
 
 const Login: React.FC = () => {
     const [flashMessage, setFlashMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-    const [showFlash, setShowFlash] = useState(false);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         setFlashMessage(null);
-        setShowFlash(false);
 
         const formData = new FormData(e.currentTarget as HTMLFormElement);
         const usernameOrEmail= formData.get('usernameOrEmail');
@@ -23,30 +21,24 @@ const Login: React.FC = () => {
             },
             body: JSON.stringify({ usernameOrEmail: usernameOrEmail, password: password })
         })
-        .then(response => {
-            if (response.status === 401) {
-                throw new Error('Unauthorized')
-            }
-            return response.json()
-        })
+        .then(response => response.json())
         .then(data => {
-            setFlashMessage({ type: 'success', message: "Successfully logged in!" });
-            setShowFlash(true); 
+            console.log(data);
+            if(data.type === "success"){
+                setFlashMessage({ type: 'success', message: data.message });
+            }
+            else{
+                setFlashMessage({ type: 'error', message: data.message });
+            }
         })
         .catch(error => {
-            if (error.message === 'Unauthorized') {
-                setFlashMessage({ type: 'error', message: 'Incorrect credentials!' });
-                setShowFlash(true); 
-            } else {
-                setFlashMessage({ type: 'error', message: 'An error occurred. Please try again.' });
-                setShowFlash(true); 
-            }
+            setFlashMessage({ type: 'error', message: 'An error occurred. Please try again.' });
         });
     };
 
     return (
         <div className="login-container">
-            {showFlash && flashMessage && (
+            {flashMessage && (
                 <FlashMessage
                     type={flashMessage.type}
                     message={flashMessage.message}
